@@ -342,7 +342,7 @@ namespace Controller
                         Trace.WriteLine($"Participants left: {countParticipants}");
                         if(countParticipants == 0)
                         {
-                            Console.Clear();
+                            //Console.Clear();
                             GoToNextTrack();
                         }
                     }

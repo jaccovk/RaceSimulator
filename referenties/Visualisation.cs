@@ -138,7 +138,8 @@ namespace Controller
 
 
 
-        public static void DrawTrack(Track track)
+        public static void 
+            DrawTrack(Track track)
         {
             dir = Direction.East;
             Initialize(race);

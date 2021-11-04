@@ -1,0 +1,26 @@
+﻿<Window x:Class="GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GUI"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="800" Width="1200
+        ">
+    <!--<Window.DataContext>
+        <Model:MainDataContext/>
+    </Window.DataContext>-->
+    <Grid Background="LightGreen">
+        <DockPanel LastChildFill="False" Margin="0,0,0,712">
+            <Menu DockPanel.Dock="Top" Height="20" >
+                <MenuItem Header="Menu">
+                    <MenuItem Header="RaceDetails" Click="Open_Race_Details"/>
+                    <MenuItem Header="CompetitionDetails" Click="Open_Competition_Details"/>
+                    <MenuItem Header="Close" Click="MenuItem_Exit_Click"/>
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+        <Image x:Name="ImageCanvas" Margin="65,90,65,35"/>
+        <Label Content="{Binding TrackName}" HorizontalAlignment="Center" Margin="0,26,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.421,0.656" IsEnabled="False" Height="20"/>
+    </Grid>
+</Window>
