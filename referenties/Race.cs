@@ -25,7 +25,7 @@ namespace Controller
         private Dictionary<IParticipant, int> _rounds = new Dictionary<IParticipant, int>();
         public Dictionary<string, string> previousName = new Dictionary<string, string>();
         private Dictionary<Section, SectionData> _positions;
-        private Timer timer;
+        public Timer timer;
         public int countParticipants;
 
         public event EventHandler<DriversChangedEventArgs> DriversChanged;
