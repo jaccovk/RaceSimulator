@@ -35,13 +35,20 @@ namespace GUI
             else return Cache[url];
         }
 
+        public static Bitmap GetBitmap(string filename)
+        {
+            if (!Cache.ContainsKey(filename))
+                Cache.Add(filename, new Bitmap(filename));
+            return Cache[filename];
+        }
+
         public static Bitmap CreateBitmap(int x, int y)
         {
             string empty = "empty";
             if (!Cache.ContainsKey(empty))
             {
                 //voeg een nieuwe bitmap toe
-                Cache.Add(empty,new Bitmap(x,y));
+                Cache.Add(empty,new Bitmap(x ,y ));
                 //geef de background een kleur
                 Graphics g = Graphics.FromImage(Cache[empty]);
                 g.Clear(Color.DarkGreen);

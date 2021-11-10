@@ -32,9 +32,6 @@ namespace Model
             return sectie1;
         }
 
-        public IEnumerator GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+
     }
 }

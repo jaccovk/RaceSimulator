@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="800" Width="1200
         ">
-    <!--<Window.DataContext>
-        <Model:MainDataContext/>
-    </Window.DataContext>-->
+    <Window.DataContext>
+        <local:MainWindowDataContext/>
+    </Window.DataContext>
     <Grid Background="LightGreen">
         <DockPanel LastChildFill="False" Margin="0,0,0,712">
             <Menu DockPanel.Dock="Top" Height="20" >
@@ -21,6 +21,6 @@
             </Menu>
         </DockPanel>
         <Image x:Name="ImageCanvas" Margin="65,90,65,35"/>
-        <Label Content="{Binding TrackName}" HorizontalAlignment="Center" Margin="0,26,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.421,0.656" IsEnabled="False" Height="20"/>
+        <Label Content="{Binding TrackName}" HorizontalAlignment="Center" Margin="0,26,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.421,0.656" Height="20" Width="180"/>
     </Grid>
 </Window>

@@ -12,6 +12,8 @@ using System.Timers;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using ConsoleView;
 using Controller;
 using Model;
 using Track = Model.Track;
@@ -21,7 +23,8 @@ namespace GUI
     public static class Visualise
     {
         public static Bitmap canvas;
-        public static Race race { get; set; } = Data.CurrentRace;
+        public static Race race; //= Data.CurrentRace;
+        public static event EventHandler<DriversChangedEventArgs> DriverChangedWPF;
 
         private static int currentX ;
         private static int currentY ;
@@ -29,12 +32,9 @@ namespace GUI
         private static int xMax;
         private static int yMax;
 
-        private static int xBitmap;
-        private static int yBitmap;
-
         static Direction dir ;
         private static int sizeSection = Data.SectionLength;
-        private static int sizeDriver = 80;
+        private static int sizeDriver = 40;//80;
 
         #region graphics
 
@@ -49,7 +49,9 @@ namespace GUI
         private static string _cornerRNorth = ".\\Pictures\\Road\\CornerRightNorth.png";
 
         private static string _finishHorizontal = ".\\Pictures\\Road\\Finish.png";
+        private static string _finishVertical = ".\\Pictures\\Road\\FinishVertical.png";
         private static string _startHorizontaal = ".\\Pictures\\Road\\Start.png";
+        private static string _startVerticaal = ".\\Pictures\\Road\\StartVertical.png";
 
         private static string _straightHorizontal = ".\\Pictures\\Road\\StraightHorizontal.png";
         private static string _straightVertical = ".\\Pictures\\Road\\StraightVertical.png";
@@ -60,109 +62,113 @@ namespace GUI
         private static string _bus = ".\\Pictures\\Bus.png";
         #endregion
         #region teamColor
-        private static string _blueEast = ".\\Pictures\\Car\\East\\Blue.png";
-        private static string _greenEast = ".\\Pictures\\Car\\East\\Green.png";
-        private static string _yellowEast = ".\\Pictures\\Car\\East\\Yellow.png";
-        private static string _greyEast = ".\\Pictures\\Car\\East\\Grey.png";
-        private static string _redEast = ".\\Pictures\\Car\\East\\Red.png";
+        private static string _blueEast = ".\\Pictures\\Car\\East\\bus_blue.png";
+        private static string _greenEast = ".\\Pictures\\Car\\East\\bus_green.png";
+        private static string _yellowEast = ".\\Pictures\\Car\\East\\bus_yellow.png";
+        private static string _greyEast = ".\\Pictures\\Car\\East\\bus_grey.png";
+        private static string _redEast = ".\\Pictures\\Car\\East\\bus_red.png";
 
-        private static string _blueWest = ".\\Pictures\\Car\\West\\Blue.png";
-        private static string _greenWest = ".\\Pictures\\Car\\West\\Green.png";
-        private static string _yellowWest = ".\\Pictures\\Car\\West\\Yellow.png";
-        private static string _greyWest = ".\\Pictures\\Car\\West\\Grey.png";
-        private static string _redWest = ".\\Pictures\\Car\\West\\Red.png";
+        private static string _blueWest = ".\\Pictures\\Car\\West\\bus_blue.png";
+        private static string _greenWest = ".\\Pictures\\Car\\West\\bus_green.png";
+        private static string _yellowWest = ".\\Pictures\\Car\\West\\bus_yellow.png";
+        private static string _greyWest = ".\\Pictures\\Car\\West\\bus_grey.png";
+        private static string _redWest = ".\\Pictures\\Car\\West\\bus_red.png";
 
-        private static string _blueNorth = ".\\Pictures\\Car\\North\\Blue.png";
-        private static string _greenNorth = ".\\Pictures\\Car\\North\\Green.png";
-        private static string _yellowNorth = ".\\Pictures\\Car\\North\\Yellow.png";
-        private static string _greyNorth = ".\\Pictures\\Car\\North\\Grey.png";
-        private static string _redNorth = ".\\Pictures\\Car\\North\\Red.png";
+        private static string _blueNorth = ".\\Pictures\\Car\\North\\bus_blue.png";
+        private static string _greenNorth = ".\\Pictures\\Car\\North\\bus_green.png";
+        private static string _yellowNorth = ".\\Pictures\\Car\\North\\bus_yellow.png";
+        private static string _greyNorth = ".\\Pictures\\Car\\North\\bus_grey.png";
+        private static string _redNorth = ".\\Pictures\\Car\\North\\bus_red.png";
 
-        private static string _blueSouth = ".\\Pictures\\Car\\South\\Blue.png";
-        private static string _greenSouth = ".\\Pictures\\Car\\South\\Green.png";
-        private static string _yellowSouth = ".\\Pictures\\Car\\South\\Yellow.png";
-        private static string _greySouth = ".\\Pictures\\Car\\South\\Grey.png";
-        private static string _redSouth = ".\\Pictures\\Car\\South\\Red.png";
+        private static string _blueSouth = ".\\Pictures\\Car\\South\\bus_blue.png";
+        private static string _greenSouth = ".\\Pictures\\Car\\South\\bus_green.png";
+        private static string _yellowSouth = ".\\Pictures\\Car\\South\\bus_yellow.png";
+        private static string _greySouth = ".\\Pictures\\Car\\South\\bus_grey.png";
+        private static string _redSouth = ".\\Pictures\\Car\\South\\bus_red.png";
 
         #endregion
 
 
 
-        public static void Initialize()
+        public static void Initialize(Race _race)
         {
-            currentX = 1;
-            currentY = 1;
-
-
+            race = _race;
+            //race.NextRace += OnNextRaceWPF;
         }
-        
+
+
         public static BitmapSource DrawTrack(Track track)
         {
-            
-            Initialize();
+            int xBitmap;
+            int yBitmap;
+
+                currentX = 1;
+            currentY = 1;
             dir = Direction.East;
 
             //de xMax en yMax van de bitmap moet berekend worden. hiervoor moet eerst de track in de memory uitgetekend worden.
-            GetSizeTrack(track);
+            (xBitmap,yBitmap) = GetSizeTrack(track);
             
             //de output van de GetSizeTrack is xBitmap,yBitmap. deze worden aan de canvas meegegeven.
             canvas = VisualiseImages.CreateBitmap(xBitmap * (sizeSection * 2 + 50), yBitmap * (sizeSection * 2 + 50));
             Graphics trackGraphics = Graphics.FromImage(canvas);
 
             //add grass on background
-            for (int row = 0; row < canvas.Width; row+=100)
+            for (int row = 0; row < 1000; row+=500)
             {
-                for (int col = 0; col < canvas.Height; col+=100)
+                for (int col = 0; col < 1000; col+=500)
                 {
-                    trackGraphics.DrawImage(VisualiseImages.GetImage(_grass), row, col, 100, 100);
-                    if(row ==  800 && col == 100) trackGraphics.DrawImage(VisualiseImages.GetImage(_water), row, col, 100, 100);
-                    if(row ==  700 && col == 100) trackGraphics.DrawImage(VisualiseImages.GetImage(_water), row, col, 100, 100);
-                    if(row ==  800 && col == 200) trackGraphics.DrawImage(VisualiseImages.GetImage(_water), row, col, 100, 100);
-                    if(row ==  700 && col == 200) trackGraphics.DrawImage(VisualiseImages.GetImage(_water), row, col, 100, 100);
+                    
+                    trackGraphics.DrawImage(VisualiseImages.GetImage(_grass), row, col, 500, 500);
+                    /*if((row ==  700  ||row == 800 || row == 900) && col == 700) trackGraphics.DrawImage(VisualiseImages.GetImage(_water), row, col, 100, 100);
+                    if((row == 700 || row == 800 || row == 900) && col == 800) trackGraphics.DrawImage(VisualiseImages.GetImage(_water), row, col, 100, 100);
+                    if((row == 700 || row == 800 || row == 900) && col == 900) trackGraphics.DrawImage(VisualiseImages.GetImage(_water), row, col, 100, 100);*/
                 }
             }
+            /*
             for (int row = 0; row < canvas.Width; row += 100)
             {
                 for (int col = 0; col < canvas.Height; col += 100)
                 {
-                    if (row == 700 && col == 300) trackGraphics.DrawImage(VisualiseImages.GetImage(_bus), row, col, 200, 200);
+                    if (row == 700 && col == 100) trackGraphics.DrawImage(VisualiseImages.GetImage(_bus), row, col, 200, 200);
                 }
-            }
+            }*/
 
             //build a track
-            AddTrack(track, trackGraphics);
+            AddTrack(track, trackGraphics, xBitmap, yBitmap);
 
-
-            //place the drivers on track
-            //PlaceDrivers(trackGraphics, track);
 
             //return canvas with track
             return VisualiseImages.CreateBitmapSourceFromGdiBitmap(canvas);
             }
 
-        public static void PlaceDrivers(Graphics graphics, Track track)
+        public static void PlaceDrivers(Graphics graphics, Track track, int xBitmap, int yBitmap, Section sect)
         {
 
-            foreach (var sect in track.Sections)
-            {
-                var sectionData = Data.CurrentRace.GetSectionData(sect);
-                if (sectionData.Left != null)
+            /*foreach (var sect in track.Sections)
+            {*/
+                IParticipant leftParticipant = race.GetSectionData(sect).Left;
+                IParticipant rightParticipant = race.GetSectionData(sect).Right;
+
+                    if (leftParticipant != null)
                 {
-                    if (!sectionData.Left.Equipment.IsBroken)
+                    if (!leftParticipant.Equipment.IsBroken)
                     {
-                        graphics.DrawImage(VisualiseImages.GetImage(GetDriverImage(sectionData.Left, dir)), xBitmap, yBitmap, sizeDriver, sizeDriver);
-                    }
-                    else graphics.DrawImage(VisualiseImages.GetImage(_isBroken),xBitmap,yBitmap,sizeDriver,sizeDriver);//!!!!x,yBitmap nog AANPASSEN
+                        graphics.DrawImage(VisualiseImages.GetImage(GetDriverImage(leftParticipant, dir)), xBitmap, yBitmap, sizeDriver, sizeDriver);
+                    ChangePosition(ref xBitmap, ref yBitmap);
                 }
-                if (sectionData.Right != null)
+                    else graphics.DrawImage(VisualiseImages.GetImage(_isBroken),xBitmap,yBitmap,sizeDriver-30,sizeDriver-30);
+                }
+                if (rightParticipant!= null)
                 {
-                    if (!sectionData.Right.Equipment.IsBroken)
+                    if (!rightParticipant.Equipment.IsBroken)
                     {
-                        graphics.DrawImage(VisualiseImages.GetImage(GetDriverImage(sectionData.Left, dir)), xBitmap, yBitmap, sizeDriver, sizeDriver);
+                        graphics.DrawImage(VisualiseImages.GetImage(GetDriverImage(rightParticipant, dir)), xBitmap, yBitmap-20, sizeDriver, sizeDriver);
+                        ChangePosition(ref xBitmap,ref yBitmap);
                     }
-                    else graphics.DrawImage(VisualiseImages.GetImage(_isBroken), xBitmap, yBitmap, sizeDriver, sizeDriver);//!!!!x,yBitmap nog AANPASSEN
+                    else graphics.DrawImage(VisualiseImages.GetImage(_isBroken), xBitmap, yBitmap, sizeDriver-10, sizeDriver-10);
                 }
-            }
+            //}
         }
 
         public static string GetDriverImage(IParticipant participant, Direction dir)
@@ -256,8 +262,7 @@ namespace GUI
 
             return output;
         }
-
-        public static void AddTrack(Track track, Graphics graphics)
+        public static void AddTrack(Track track, Graphics graphics, int xBitmap, int yBitmap)
         {
             if (Data.CurrentRace != null)
             {
@@ -277,12 +282,14 @@ namespace GUI
 
                         case SectionTypes.StartGrid:
                             if (dir == Direction.East || dir == Direction.West)
-                                graphics.DrawImage(VisualiseImages.GetImage(_startHorizontaal), xBitmap, yBitmap, sizeSection, sizeSection); ;
+                                graphics.DrawImage(VisualiseImages.GetImage(_startHorizontaal), xBitmap, yBitmap, sizeSection, sizeSection);
+                            else graphics.DrawImage(VisualiseImages.GetImage(_startVerticaal), xBitmap, yBitmap, sizeSection, sizeSection);
                             break;
 
                         case SectionTypes.Finish:
                             if (dir == Direction.East || dir == Direction.West)
                                 graphics.DrawImage(VisualiseImages.GetImage(_finishHorizontal), xBitmap, yBitmap, sizeSection, sizeSection);
+                            else graphics.DrawImage(VisualiseImages.GetImage(_finishVertical), xBitmap, yBitmap, sizeSection, sizeSection);
                             break;
 
                         case SectionTypes.LeftCorner:
@@ -302,11 +309,13 @@ namespace GUI
                             ChangeDirectionToRight();
                             break;
                     }
-                    ChangePosition();
+                    //place the drivers on track
+                    PlaceDrivers(graphics, track, xBitmap, yBitmap, sect);
+                    ChangePosition(ref xBitmap,ref yBitmap);
                 }
             }
         }
-        public static void GetSizeTrack(Track track)
+        public static (int xBitmap,int yBitmap) GetSizeTrack(Track track)
         {
             foreach (Section currentS in track.Sections)
             {
@@ -328,11 +337,20 @@ namespace GUI
                 }
             }
 
-            xBitmap = xMax + 1;
-            yBitmap = yMax + 1;
+            int xBitmap = xMax + 1;
+            int yBitmap = yMax + 1;
+            return (xBitmap,yBitmap);
         }
-       
 
+        /*public static void OnNextRaceWPF(Object sender, EventArgs eventArgs)
+        {
+            DriverChangedWPF += OnDriversChangedWPF;
+        }
+
+        public static void OnDriversChangedWPF(Object sender, DriversChangedEventArgs eventArgs)
+        {
+            DrawTrack(eventArgs.Track);
+        }*/
 
         public static void ChangeCursor()
         {
@@ -355,21 +373,21 @@ namespace GUI
             if (currentY > xMax) xMax = currentX;
             if (currentX > yMax) yMax = currentY;
         }
-        public static void ChangePosition()
+        public static void ChangePosition(ref int x, ref int y)
         {
             switch (dir)
             {
                 case Direction.North:
-                    yBitmap-=sizeSection;
+                    y-=sizeSection;
                     break;
                 case Direction.East:
-                    xBitmap += sizeSection;
+                    x += sizeSection;
                     break;
                 case Direction.South:
-                    yBitmap+= sizeSection;
+                    y+= sizeSection;
                     break;
                 case Direction.West:
-                    xBitmap -= sizeSection;
+                    x -= sizeSection;
                     break;
             }
         }

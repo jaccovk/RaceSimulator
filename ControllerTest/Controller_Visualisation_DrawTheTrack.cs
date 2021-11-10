@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using ConsoleView;
 using NUnit.Framework;
 using Model;
 using Controller;
@@ -12,8 +14,10 @@ namespace ControllerTest
     [TestFixture]
     public class Model_Visualisation_DrawTheTrack
     {
-        private Competition competition;
         private Track track;
+        private Race race;
+        private List<IParticipant> participants;
+        private IEquipment equipment;
 
         #region graphics
 
@@ -62,149 +66,75 @@ namespace ControllerTest
         [SetUp]
         public void SetUp()
         {
-            Track tr = new Track("Spa_Section2",
+            Track tr = new Track("Rondje",
                 new SectionTypes[]
                 {
                     SectionTypes.StartGrid, SectionTypes.Finish, SectionTypes.RightCorner, SectionTypes.RightCorner, SectionTypes.Straight, SectionTypes.Straight, SectionTypes.RightCorner, SectionTypes.RightCorner
                 });
-            Competition comp = new Competition();
-            comp.Tracks.Enqueue(tr);
 
-            Driver JaccoVerstappen = new Driver("Jacco Verstappen", 0, new Car(10, 3, 10, false), TeamColors.Red);
-            Driver MamaVerstappen = new Driver("Mama Verstappen", 0, new Car(10, 3, 9, false), TeamColors.Yellow);
+            participants = new List<IParticipant>();
+            equipment = new Car(0, 0, 0, false);
+            participants.Add(new Driver("Jacco Verstappen", 0, new Car(10, 3, 10, false), TeamColors.Red));
+            participants.Add(new Driver("Mama Verstappen", 0, new Car(10, 3, 9, false), TeamColors.Yellow));
 
-            competition.Participants.Add(JaccoVerstappen);
-            competition.Participants.Add(MamaVerstappen);
-
-            competition.NextTrack();
-
-            competition = comp;
             track = tr;
+            race = new Race(track, participants);
         }
 
+
+
         [Test]
-        public void DrawTrack()
+        public void Test_GetSectionData_IsNotNull()
         {
-            Track track = new Track("Spa_Section1",
-                new SectionTypes[]
-                {
-                    SectionTypes.StartGrid, SectionTypes.RightCorner, SectionTypes.RightCorner, SectionTypes.Straight, SectionTypes.Straight,
-                    SectionTypes.RightCorner, SectionTypes.RightCorner, SectionTypes.Finish
-                });
-            Competition competition = new Competition();
-            competition.Tracks.Enqueue(track);
-            competition.NextTrack();
-            Visualisation.DrawTrack(track);
+            Section section = track.Sections.First?.Value;
+            race.GetSectionData(section);
+            Assert.IsNotNull(section);
         }
 
 
         [Test]
-
-        public void ReplacePlaceHolders_PlaceParticipants_IsNull()
+        public void ReplacePlaceHolders_PlaceParticipants_IsNotNull()
         {
-            
-            Visualisation.DrawTrack(track);
+            race.PlaceParticipantsOnStartGrid();
 
-            Competition comp2 = new Competition();
-            comp2.Tracks.Enqueue(track);
-            Data.CurrentRace = new Race(competition.NextTrack(), comp2.Participants);
-            Race race = Data.CurrentRace;
+            string output;
 
-            List<string> gridStrings = new List<string>();
+                output = Visualisation.ReplacePlaceHoldersAndPlaceParticipantsOnGrid(_startHorizontaal[1],
+                    race.GetSectionData(track.Sections.First?.Value).Left,
+                    race.GetSectionData(track.Sections.First?.Value).Right);
+            Assert.IsNotEmpty(output);
+        }
 
+        [Test]
+        public void Test_Quality()
+        {
+            Assert.IsNotNull(participants[0].Equipment.Quality);
+        }
 
-            Direction dir = Direction.East;
-            Visualisation.Initialize(race);
-            Console.SetCursorPosition(Visualisation.x, Visualisation.y);
-            foreach (var sect in track.Sections)
+        [Test]
+        public void Test_Points()
+        {
+            participants[0].Points = 10;
+            Assert.IsNotNull(participants[0].Points);
+        }
+
+        [Test]
+        public void Test_TeamColor()
+        {
+            Assert.IsNotNull(participants[0].TeamColor);
+        }
+
+        [Test]
+        public void Test_NextRaceEventArgs_IsNotNull()
+        {
+            var NextRace = new NextRaceEventArgs()
             {
-                Console.BackgroundColor = ConsoleColor.DarkBlue;
+                Race = race
+            };
 
-
-                switch (sect.SectionType)
-                {
-                    case SectionTypes.Straight:
-                        if (dir == Direction.East || dir == Direction.West)
-                        {
-                            Visualisation.toDraw = _straightHorizontaal;
-                        }
-                        else Visualisation.toDraw = _straightVertical;
-
-                        break;
-
-                    case SectionTypes.StartGrid:
-                        if (dir == Direction.East || dir == Direction.West)
-                        {
-                            Visualisation.toDraw = _startHorizontaal;
-                        }
-                        else Visualisation.toDraw = _startVerticaal;
-
-                        break;
-
-                    case SectionTypes.Finish:
-                        if (dir == Direction.East || dir == Direction.West)
-                        {
-                            Visualisation.toDraw = _finishHorizontal;
-                        }
-                        else Visualisation.toDraw = _finishVertical;
-
-                        break;
-
-                    case SectionTypes.LeftCorner:
-                        if (dir == Direction.East) Visualisation.toDraw = _cornerLEast;
-                        if (dir == Direction.North) Visualisation.toDraw = _cornerLNorth;
-                        if (dir == Direction.South) Visualisation.toDraw = _cornerLSouth;
-                        if (dir == Direction.West) Visualisation.toDraw = _cornerLWest;
-                        Visualisation.ChangeDirectionToLeft();
-                        break;
-
-                    case SectionTypes.RightCorner:
-                        if (dir == Direction.East) Visualisation.toDraw = _cornerREast;
-                        if (dir == Direction.North) Visualisation.toDraw = _cornerRNorth;
-                        if (dir == Direction.South) Visualisation.toDraw = _cornerRSouth;
-                        if (dir == Direction.West) Visualisation.toDraw = _cornerRWest;
-                        Visualisation.ChangeDirectionToRight();
-                        break;
-                }
-
-                IParticipant part1 = race.GetSectionData(sect).Left;
-                IParticipant part2 = race.GetSectionData(sect).Right;
-                string grid;
-                for (int col = 0; col < 4; col++)
-                {
-                    grid = Visualisation.toDraw[col];
-                    Console.SetCursorPosition(Visualisation.x, Visualisation.y);
-                    
-                    if (part1 != null)
-                    {
-                        grid = grid.Replace("1", part1.Name.Substring(0, 1));
-
-                    }
-                    else
-                    {
-                        grid = grid.Replace("1", " ");
-                    }
-
-                    if (part2 != null)
-                    {
-                        grid = grid.Replace("2", part2.Name.Substring(0, 1));
-                    }
-                    else
-                    {
-                        grid = grid.Replace("2", " ");
-                    }
-
-                    
-                    gridStrings.Add(grid);
-                    Visualisation.y++;
-                }
-                Visualisation.ChangeCursor();
-            }
-            
-
-                Assert.AreEqual(track.Sections.First, gridStrings);
-            }
-
+            Assert.IsNotNull(NextRace);
+            Assert.IsNotNull(NextRace.Race);
+        }
         
         
     }

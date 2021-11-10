@@ -7,9 +7,10 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text;
+using Controller;
 using Model;
 
-namespace Controller
+namespace ConsoleView
 {
 
     public enum Direction
@@ -248,14 +249,13 @@ namespace Controller
         {
             DrawTrack(args.Track);
         }
-        public static void OnNextRaceEvent(object sender, NextRaceEventArgs e)
+
+        public static void OnNextRace(Object sender, EventArgs eventArgs)
         {
-
-            Data.Initialize();
-            // link events, draw track first time
+            Data.NextRace();
+            race = Data.CurrentRace;
             Data.CurrentRace.DriversChanged += OnDriversChanged;
-            //DrawTrack(race.Track);
-
+            Console.Clear();
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Model
 {
     public class NextRaceEventArgs: EventArgs
     {
-        public Race Race{ get; set; }
+        public Race Race { get; set; }
 
     }
 }

@@ -1,0 +1,32 @@
+﻿<Window x:Class="GUI.ShowDriverData"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GUI"
+        mc:Ignorable="d"
+        Title="ShowDriverData" Height="294" Width="600" Topmost="True">
+    <Window.DataContext>
+        <local:ShowDriverDataContext/>
+    </Window.DataContext>
+    <Grid Margin="0,0,10,0" Height="262" VerticalAlignment="Top">
+        <ListView Name ="Drivers" VerticalAlignment="Top" Margin="29,69,0,0" Background="Red" BorderBrush="#FF005BFF" Foreground="#FF002996" Height="182" RenderTransformOrigin="0.54,0.516" HorizontalAlignment="Left" ItemsSource="{Binding Driver, Mode=OneWay}"  >
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Name" HeaderStringFormat="100" DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn Header="Lap" HeaderStringFormat="100" DisplayMemberBinding="{Binding Points}"/>
+                    <GridViewColumn Header="Fastest Laptime" HeaderStringFormat="180" DisplayMemberBinding="{Binding Equipment.LapTimeDriver}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <ListView Name ="Sections" VerticalAlignment="Top" Margin="414,69,0,0" Background="Red" BorderBrush="#FF005BFF" Foreground="#FF002996" Height="182" RenderTransformOrigin="0.54,0.516" HorizontalAlignment="Left" ItemsSource="{Binding RaceSections, Mode=OneWay}"  >
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Section" HeaderStringFormat="100" DisplayMemberBinding="{Binding SectionType}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Label Content="Race:" HorizontalAlignment="Left" Margin="32,10,0,0" VerticalAlignment="Top"/>
+        <Label Content="{Binding RaceName }" HorizontalAlignment="Left" Margin="115,10,0,0" VerticalAlignment="Top" Height="26" Width="141" />
+    </Grid>
+</Window>

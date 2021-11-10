@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
+using Controller;
+using System.Runtime.ExceptionServices;
 using System.Runtime.Intrinsics.X86;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -21,15 +25,17 @@ namespace Controller
         public Track Track { get; set; }
         public List<IParticipant> Participants { get; set; }
         public DateTime StartTime { get; set; }
+        public DateTime Laptime { get; set; }
         private Random _random;
-        private Dictionary<IParticipant, int> _rounds = new Dictionary<IParticipant, int>();
-        public Dictionary<string, string> previousName = new Dictionary<string, string>();
+        public Dictionary<IParticipant, int> _rounds = new Dictionary<IParticipant, int>();
         private Dictionary<Section, SectionData> _positions;
+        public Dictionary<IParticipant, DateTime> fastestLapTime;
+
         public Timer timer;
         public int countParticipants;
 
         public event EventHandler<DriversChangedEventArgs> DriversChanged;
-        public event EventHandler<NextRaceEventArgs> NextRace;
+        public event EventHandler NextRaceRace;
 
         public Race(Track track, List<IParticipant> participants)
         {
@@ -44,6 +50,7 @@ namespace Controller
 
         public void Initialize()
         {
+            fastestLapTime = new Dictionary<IParticipant, DateTime>();
             RandomizeEquipment();
             PlaceParticipantsOnStartGrid();
             SetTimer();
@@ -54,15 +61,15 @@ namespace Controller
         /*TIMER*/
         public void SetTimer()
         {
-            timer = new Timer(100);
+            timer = new Timer(200);
             timer.Elapsed += OnTimedEvent;
-            //OnTimedEvent(null, null);
         }
 
 
 
         private void OnTimedEvent(Object source, ElapsedEventArgs args)
         {
+            // add sections to track
             List<Section> sections = Track.Sections.ToList();
             sections.Reverse();
 
@@ -71,10 +78,11 @@ namespace Controller
                 SectionData currentSectionData = GetSectionData(currentSection);
                 SectionData nextSectionData = GetSectionData(Track.Sections.Find(currentSection).Next != null ? Track.Sections.Find(currentSection).Next.Value : Track.Sections.First.Value); // eerst checkt ie of currentSection null is, vervolgens past hij de value aan.
 
+                //move the driver
                 MoveDriver(currentSectionData, nextSectionData, currentSection, args);
-                //DriverFinishedChecker(currentSectionData, currentSection, args);// if driver passes finish, _round += 1
-                
+
             }
+            //'refresh' the view
                 DriversChanged?.Invoke(this, new DriversChangedEventArgs()
                 {
                     Track = this.Track
@@ -86,12 +94,10 @@ namespace Controller
         {
             foreach (IParticipant p in Participants)
             {
-                
-                    _rounds.Add(p, 0);
-                
+                //give the drivers rounds
+                _rounds.Add(p, 0);
             }
-            //SetLapParticipants();
-            //StartTime.AddMilliseconds(timer.Interval);
+ 
             timer.Enabled = true;
         }
 
@@ -100,8 +106,9 @@ namespace Controller
         {
             foreach (IParticipant p in Participants)
             {
-                p.Equipment.Speed = _random.Next(4, 10);
-                p.Equipment.Performance = _random.Next(3, 9);
+                //randomize the equipment of the drivers
+                p.Equipment.Speed = _random.Next(7, 10);
+                p.Equipment.Performance = _random.Next(8, 9);
 
             }
             _random.Next();
@@ -112,13 +119,13 @@ namespace Controller
             bool isBroken;
             if (participant.Equipment.IsBroken == false)
             {
-                int broken = _random.Next(1, 50);
+                int broken = _random.Next(1, 80);
 
                 if (broken == 10)
                 {
                     participant.Equipment.IsBroken = true;
                     isBroken =  true;
-                    if (participant.Equipment.Performance != 1)
+                    if (participant.Equipment.Performance != 3)
                     {
                         participant.Equipment.Performance--;
                     }
@@ -145,10 +152,10 @@ namespace Controller
             return isBroken;
         }
 
-        
 
 
-        /*PLACE PARTICIPANTS ON TRACK*/
+
+
         public SectionData GetSectionData(Section section)
         {
             if (_positions.ContainsKey(section))
@@ -166,6 +173,7 @@ namespace Controller
         public void PlaceParticipantsOnStartGrid()
         {
             List<Section> grids = Track.Sections.Where(Track => Track.SectionType == SectionTypes.StartGrid).ToList();
+            
 
             int gridsCount = grids.Count;
             bool side = true;
@@ -173,6 +181,7 @@ namespace Controller
             int participantsSet = 0;
             int pointSectionNumber = 0;
             gridsCount *= 2;
+
 
             if (participantCount <= gridsCount)
             {
@@ -187,7 +196,6 @@ namespace Controller
                 if (side)
                 {
                     GetSectionData(grids[pointSectionNumber]).Left = Participants[i];
-
                 }
                 else
                 {
@@ -213,8 +221,6 @@ namespace Controller
         public void MoveDriver(SectionData currentSection, SectionData nextSection, Section section, ElapsedEventArgs args)
         {
             int totalSectionLength = Data.SectionLength;
-            //bij finish i++ voor lapround
-
             if (currentSection.Left != null)
             {
                 if(IsBroken(currentSection.Left) == false)
@@ -226,29 +232,29 @@ namespace Controller
                         if (nextSection.Left == null)
                         {
                             currentSection.DistanceLeft = 0;
-                            //currentSection.DistanceLeft -= totalSectionLength;
+                            // if driver passes finish, _round += 1
                             DriverFinishedChecker(currentSection, section,
-                                args); // if driver passes finish, _round += 1
+                                args); 
                             nextSection.Left = currentSection.Left;
                             currentSection.Left = null;
                         }
                         else if (nextSection.Right == null)
                         {
                             currentSection.DistanceLeft = 0;
-                            //currentSection.DistanceLeft -= totalSectionLength;
+                            // if driver passes finish, _round += 1
                             DriverFinishedChecker(currentSection, section,
-                                args); // if driver passes finish, _round += 1
+                                args); 
                             nextSection.Right = currentSection.Left;
                             currentSection.Left = null;
                         }
                         else if (nextSection.Left != null && nextSection.Right != null)
                         {
+                            //if both nextSections are taken, currentsection.driver should wait
                             currentSection.DistanceLeft -= SpeedDriver;
                         }
 
                     }
                 }
-                //DriversChanged += Visualisation.OnDriversChanged;
             }
             if (currentSection.Right != null)
             {
@@ -261,7 +267,6 @@ namespace Controller
                         if (nextSection.Right == null)
                         {
                             currentSection.DistanceRight = 0;
-                            //currentSection.DistanceRight -= totalSectionLength;
                             DriverFinishedChecker(currentSection, section, args); // if driver passes finish, _round += 1
                             nextSection.Right = currentSection.Right;
                             currentSection.Right = null;
@@ -269,7 +274,6 @@ namespace Controller
                         else if (nextSection.Left == null)
                         {
                             currentSection.DistanceRight = 0;
-                            //currentSection.DistanceRight -= totalSectionLength;
                             DriverFinishedChecker(currentSection, section,
                                 args); // if driver passes finish, _round += 1
                             nextSection.Left = currentSection.Right;
@@ -277,6 +281,7 @@ namespace Controller
                         }
                         else if (nextSection.Left != null && nextSection.Right != null)
                         {
+                            //if both nextSections are taken, currentsection.driver should wait
                             currentSection.DistanceRight -= SpeedDriver;
                         }
 
@@ -284,19 +289,11 @@ namespace Controller
                 }
             }
         }
-
-        /*public void SetLapParticipants()
-        {
-            foreach (IParticipant part in Participants)
-            {
-                _rounds.Add(part, 0);
-            }
-        }*/
-
         public void SetLapParticipants(IParticipant part)
         {
             if (_rounds.ContainsKey(part))
             {
+                //add a round to the participant
                 _rounds[part]++;
                 Trace.WriteLine($"Driver {part.Name}\t ---> rondenummer: {_rounds[part]}/{Data.Rounds}");
             }
@@ -306,37 +303,68 @@ namespace Controller
             }
         }
 
-        public void DriverFinishedChecker(SectionData currentSection, Section section , ElapsedEventArgs args)
+        public void SetLapTimeDriver(IParticipant part)
+        {
+
+            if (!fastestLapTime.ContainsKey(part))
+            {
+                StartTime = DateTime.Now;
+                fastestLapTime.Add(part, StartTime);
+            }
+            else
+            {
+                Laptime = DateTime.Now;
+                Laptime -= StartTime.TimeOfDay;
+                if((Laptime - fastestLapTime[part].TimeOfDay)<fastestLapTime[part])
+                {
+                    fastestLapTime.Remove(part);
+                    fastestLapTime.Add(part, Laptime);
+                }
+            }
+        }
+
+        public void DriverFinishedChecker(SectionData currentSection, Section section, ElapsedEventArgs args)
         {
             if (currentSection.Left != null)
             {
                 if (section.SectionType == SectionTypes.Finish)
                 {
-                    if (_rounds[currentSection.Left] == Data.Rounds)
+                    //sets the time to a driver
+                    SetLapTimeDriver(currentSection.Left);
+                    //if laptime is faster than the previous laptime, laptime is added to the driver
+                    currentSection.Left.Equipment.LapTimeDriver = fastestLapTime[currentSection.Left];
+                    Trace.WriteLine($"Driver {currentSection.Left.Name}\t ---> laptime: {fastestLapTime[currentSection.Left]}");
+                    
+                    if (_rounds[currentSection.Left] >= Data.Rounds)
                     {
+                        //if driver finished all rounds of the track, points are given to drivers.
+                        CalculateDriverPoints(currentSection.Left, countParticipants);
                         currentSection.Left = null;
                         countParticipants -= 1;
                         Trace.WriteLine($"Participants left: {countParticipants}");
                         if (countParticipants == 0)
                         {
-                            Console.Clear();
+                            //if all drivers are finished, next track should be started.
                             GoToNextTrack();
                         }
                     }
                     else
                     {
                         SetLapParticipants(currentSection.Left);
-                        //AddRound(currentSection.Left);
                     }
                 }
             }
-
-            if (currentSection.Right != null)
+        
+        if (currentSection.Right != null)
             {
                 if (section.SectionType == SectionTypes.Finish)
                 {
-                    if (_rounds[currentSection.Right] == Data.Rounds)
+                    SetLapTimeDriver(currentSection.Right);
+                    currentSection.Right.Equipment.LapTimeDriver = fastestLapTime[currentSection.Right];
+                    Trace.WriteLine($"Driver {currentSection.Right.Name}\t ---> laptime: {fastestLapTime[currentSection.Right]}");
+                    if (_rounds[currentSection.Right] >= Data.Rounds)
                     {
+                        CalculateDriverPoints(currentSection.Right, countParticipants);
                         currentSection.Right = null;
                         countParticipants -= 1;
                         Trace.WriteLine($"Participants left: {countParticipants}");
@@ -349,23 +377,39 @@ namespace Controller
                     else
                     {
                         SetLapParticipants(currentSection.Right);
-                        //AddRound(currentSection.Right);
                     }
                 }
             }
         }
 
+        public void CalculateDriverPoints(IParticipant part, int countPart)
+        {
+            if (countPart % Participants.Count == 0)
+                part.Points += Data.FirstPlace;
+            if (countPart % Participants.Count-1 == 0)
+                part.Points += Data.SecondPlace;
+            if (countPart % Participants.Count-2 == 0)
+                part.Points += Data.ThirdPlace;
+            //if the participants fastest lap is less fast than the current laptime, LapTimeDriver is being updated.
+            if(part.Equipment.LapTimeDriver == null || part.Equipment.LapTimeDriver > fastestLapTime[part])
+            {
+                part.Equipment.LapTimeDriver = fastestLapTime[part];
+            }
+        }
+
+
         public void GoToNextTrack()
         {
+            //clear the past track and start the new race.
             timer.Enabled = false;
             DriversChanged = null;
-            //NextRace = null;
             countParticipants = Participants.Count;
-            Data.NextRace();
-            NextRace += Visualisation.OnNextRaceEvent;
-            NextRace?.Invoke(this, new NextRaceEventArgs(){Race = Data.CurrentRace});
-            //Data.CurrentRace.DriversChanged += Visualisation.OnDriversChanged;
 
+            if (Data.CurrentRace.NextRaceRace != null)
+            { Data.CurrentRace.NextRaceRace.Invoke(this, new EventArgs()); }
+            else Console.WriteLine("Race finished");
+
+            Data.NextRace();
         }
     }
 }

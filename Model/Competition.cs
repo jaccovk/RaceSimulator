@@ -8,6 +8,7 @@ namespace Model
     {
         public List<IParticipant> Participants { get; set; }
         public Queue<Track> Tracks { get; set; }
+        public string CompetitionName { get; set; }
         
         
         public Competition()

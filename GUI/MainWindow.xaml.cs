@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,6 +17,7 @@ using System.Windows.Threading;
 using Model;
 using Controller;
 
+
 namespace GUI
 {
     /// <summary>
@@ -26,55 +28,50 @@ namespace GUI
         public MainWindow()
         {
             InitializeComponent();
-            VisualiseImages.InitializeCache();
             Data.Initialize();
+            Data.NextRaceEvent += OnNextRace;
             Data.NextRace();
-            Initialize();
+            
         }
-
-        public void Initialize()
-        {
-            Data.CurrentRace.DriversChanged += OnDriversChanged;
-        }
-
 
         private void OnDriversChanged(Object sender, DriversChangedEventArgs e)
         {
+            //Visualise.Initialize();
             ImageCanvas.Dispatcher.BeginInvoke(
                 DispatcherPriority.Render,
                 new Action(() =>
                 {
                     ImageCanvas.Source = null; 
-                    ImageCanvas.Source = Visualise.DrawTrack(Data.CurrentRace.Track);
+                    ImageCanvas.Source = Visualise.DrawTrack(e.Track);
                 }));
-            Data.CurrentRace.NextRace += OnNextRace;
+            //Data.CurrentRace.NextRace += OnNextRace;
         }
 
         private void OnNextRace(Object sender, NextRaceEventArgs e)
         {
-            Initialize();
+            VisualiseImages.InitializeCache();
+            Visualise.Initialize(e.Race);
+            e.Race.DriversChanged += OnDriversChanged;
         }
 
 
         //ACTIONS ON SCREEN
         public  void Open_Race_Details(object sender, RoutedEventArgs e)
-        {
-/*            RaceDetails = new RaceStatisticsWindow();
+        { 
+            ShowDriverData RaceDetails = new ShowDriverData();
 
-            Data.CurrentRace.NextRace += ((RaceDataContext)RaceDetails.DataContext).OnNextRaceEvent;
-            ((RaceDataContext)RaceDetails.DataContext).OnNextRaceEvent(null, new RaceStartEventArgs(Data.CurrentRace));
+            Data.CurrentRace.DriversChanged += ((ShowDriverDataContext)RaceDetails.DataContext).OnDriversChanged;
+            
 
-            RaceDetails.Show();*/
+
+            RaceDetails.Show();
         }
 
         private void Open_Competition_Details(object sender, RoutedEventArgs e)
         {
-/*            CompetitionDetails = new StatisticsWindow();
-            Data.CurrentRace.NextRace += ((CompetitionDataContext)CompetitionDetails.DataContext).OnNextRaceEvent;
+            ShowDriverCompetitionStats CompetitionDetails = new ShowDriverCompetitionStats();
 
-            ((CompetitionDataContext)CompetitionDetails.DataContext).OnNextRaceEvent(null, new RaceStartEventArgs(Data.CurrentRace));
-
-            CompetitionDetails.Show();*/
+            CompetitionDetails.Show();
         }
 
         private void MenuItem_Exit_Click(object sender, RoutedEventArgs e)

@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ControllerTest", "Controlle
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI", "GUI\GUI.csproj", "{DC9AB831-8DBE-4B2E-A16D-CD7C209C2C7B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleView", "Console\ConsoleView.csproj", "{9A8BDFBE-95C8-4EB6-BAD2-B506EE3F142C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{DC9AB831-8DBE-4B2E-A16D-CD7C209C2C7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC9AB831-8DBE-4B2E-A16D-CD7C209C2C7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC9AB831-8DBE-4B2E-A16D-CD7C209C2C7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A8BDFBE-95C8-4EB6-BAD2-B506EE3F142C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A8BDFBE-95C8-4EB6-BAD2-B506EE3F142C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A8BDFBE-95C8-4EB6-BAD2-B506EE3F142C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A8BDFBE-95C8-4EB6-BAD2-B506EE3F142C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
